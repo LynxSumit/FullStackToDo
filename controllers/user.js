@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { sendCookie } from "../utils/features.js";
 export const getAllUsers = async (req, res) => {};
 
-export const register = async (req, res , next) => {
+export const register = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
     let user = await User.findOne({ email });
@@ -23,25 +23,24 @@ export const register = async (req, res , next) => {
     next(error);
   }
 };
+
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    let user = await User.findOne({ email }).select("+password");
 
-    const user = await User.findOne({ email }).select("+password");
-
-    if (!user) return next(new ErrorHandler("Invalid Email or Password", 400));
-
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch)
-      return next(new ErrorHandler("Invalid Email or Password", 400));
-
-    sendCookie(user, res, `Welcome back, ${user.name}`, 200);
+    if (!user) {
+      return next(new ErrorHandler("Invalid email or password", 401));
+    }
+    let match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return next(new ErrorHandler("Invalid email or password", 401));
+    }
+    sendCookie(user, res, `Welcome back ${user.name}`, 200);
   } catch (error) {
     next(error);
   }
 };
-
 
 export const logout = (req, res) => {
   try {
